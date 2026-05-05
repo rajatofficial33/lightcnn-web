@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LightCNN Classifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: #111827;
+      padding: 30px;
+      border-radius: 20px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input {
+      margin: 15px 0;
+    }
+
+    button {
+      background: #e94560;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #c53050;
+      transform: translateY(-2px);
+    }
+
+    #preview {
+      margin-top: 15px;
+      width: 100%;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .bar {
+      margin-top: 10px;
+      height: 10px;
+      background: #374151;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: #e94560;
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>🧠 LightCNN Classifier</h2>
+
+  <input type="file" id="fileInput"><br>
+  <img id="preview">
+
+  <br>
+  <button onclick="predict()">Predict</button>
+
+  <div class="result" id="result">Result: -</div>
+
+  <div class="bar">
+    <div class="fill" id="confidenceBar"></div>
+  </div>
+</div>
+
+<script>
+const CLASSES = ['airplane','bird','car','cat','deer','dog','horse','monkey','ship','truck'];
+
+let session;
+
+// LOAD MODEL
+async function loadModel(){
+  console.log("Loading model...");
+  session = await ort.InferenceSession.create("lightcnn.onnx");
+  console.log("Model loaded!");
+}
+
+loadModel();
+
+// PREPROCESS
+function preprocess(img){
+  const canvas = document.createElement('canvas');
+  canvas.width = 96;
+  canvas.height = 96;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, 96, 96);
+
+  const data = ctx.getImageData(0,0,96,96).data;
+  const input = new Float32Array(3*96*96);
+
+  for(let i=0;i<96*96;i++){
+    const r = data[i*4]/255;
+    const g = data[i*4+1]/255;
+    const b = data[i*4+2]/255;
+
+    input[i] = (r - 0.4467) / 0.2603;
+    input[i + 96*96] = (g - 0.4398) / 0.2566;
+    input[i + 2*96*96] = (b - 0.4066) / 0.2713;
+  }
+
+  return input;
+}
+
+// SOFTMAX
+function softmax(arr){
+  const max = Math.max(...arr);
+  const exps = arr.map(x => Math.exp(x - max));
+  const sum = exps.reduce((a,b)=>a+b,0);
+  return exps.map(x => x/sum);
+}
+
+// IMAGE LOAD
+const input = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+
+input.onchange = () => {
+  preview.src = URL.createObjectURL(input.files[0]);
+  preview.style.display = "block";
+}
+
+// PREDICT
+async function predict(){
+  if(!session){
+    alert("Model still loading...");
+    return;
+  }
+
+  const tensorData = preprocess(preview);
+  const tensor = new ort.Tensor("float32", tensorData, [1,3,96,96]);
+
+  const output = await session.run({input: tensor});
+  const probs = softmax(Array.from(output.output.data));
+
+  let maxIdx = probs.indexOf(Math.max(...probs));
+  let confidence = probs[maxIdx] * 100;
+
+  document.getElementById("result").innerText =
+    CLASSES[maxIdx] + " (" + confidence.toFixed(1) + "%)";
+
+  document.getElementById("confidenceBar").style.width = confidence + "%";
+}
+</script>
+
+</body>
+</html>
