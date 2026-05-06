@@ -1,178 +1,676 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>LightCNN Classifier</title>
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+<title>LightCNN Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:
+    radial-gradient(circle at top left,#2a0f16 0%,#07090f 35%),
+    #05070c;
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:40px;
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.logo{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#ff4b6e,#b61f3e);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:32px;
+    box-shadow:0 0 30px rgba(255,70,110,.4);
+}
+
+.brand h1{
+    font-size:38px;
+    font-weight:700;
+}
+
+.brand p{
+    color:#7f859b;
+    margin-top:6px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+.param-chip{
+    border:1px solid #252838;
+    background:#0e111a;
+    color:#9ca3af;
+    padding:14px 22px;
+    border-radius:999px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+.hr{
+    width:100%;
+    height:1px;
+    background:#1a1d28;
+    margin:30px 0;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.card{
+    background:#0d1018;
+    border:1px solid #1f2432;
+    border-radius:22px;
+    padding:28px;
+    box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 10px 40px rgba(0,0,0,.3);
+}
+
+.label{
+    color:#6f768c;
+    text-transform:uppercase;
+    font-size:13px;
+    letter-spacing:2px;
+    margin-bottom:14px;
+    font-family:'JetBrains Mono',monospace;
+}
+
+.big{
+    font-size:52px;
+    font-weight:700;
+}
+
+.sub{
+    color:#7c8397;
+    margin-top:8px;
+}
+
+.arch{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:35px;
+}
+
+.block{
+    padding:16px 20px;
+    border-radius:16px;
+    background:#111624;
+    border:1px solid #20283b;
+    font-family:'JetBrains Mono',monospace;
+    color:#7fb0ff;
+}
+
+.block.red{
+    color:#ff6b8d;
+    border-color:#4f2633;
+    background:#1a1115;
+}
+
+.block.green{
+    color:#42d39c;
+    border-color:#214136;
+    background:#0f1715;
+}
+
+.block.gray{
+    color:#9096aa;
+}
+
+.arrow{
+    color:#596078;
+    font-size:22px;
+}
+
+.section-title{
+    color:#7d8498;
+    margin-bottom:20px;
+    font-family:'JetBrains Mono',monospace;
+    letter-spacing:2px;
+}
+
+.samples{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:18px;
+    margin-bottom:35px;
+}
+
+.sample{
+    height:170px;
+    background:#0c1018;
+    border:1px solid #1d2230;
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.sample:hover{
+    transform:translateY(-4px);
+    border-color:#ff4b6e;
+}
+
+.sample .emoji{
+    font-size:42px;
+    margin-bottom:16px;
+}
+
+.sample .txt{
+    color:#7c8397;
+    font-family:'JetBrains Mono',monospace;
+}
+
+.bottom{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+}
+
+.upload-box{
+    background:#0d1018;
+    border:2px dashed #262d3d;
+    border-radius:24px;
+    min-height:250px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    cursor:pointer;
+    transition:.25s;
+    margin-bottom:25px;
+}
+
+.upload-box:hover{
+    border-color:#ff4b6e;
+}
+
+.upload-icon{
+    font-size:54px;
+    margin-bottom:18px;
+}
+
+.upload-title{
+    font-size:32px;
+    font-weight:600;
+    margin-bottom:10px;
+}
+
+.upload-sub{
+    color:#72788c;
+}
+
+.preview-card{
+    background:#0d1018;
+    border:1px solid #1d2230;
+    border-radius:24px;
+    padding:20px;
+    min-height:320px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.preview-card img{
+    width:100%;
+    border-radius:16px;
+    display:none;
+}
+
+.predict-btn{
+    width:100%;
+    height:72px;
+    border:none;
+    border-radius:20px;
+    background:linear-gradient(135deg,#ff4b6e,#d93658);
+    color:white;
+    font-size:22px;
+    font-weight:700;
+    margin-top:25px;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.predict-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 30px rgba(255,75,110,.35);
+}
+
+.result-panel{
+    background:#0d1018;
+    border:1px solid #1d2230;
+    border-radius:24px;
+    padding:30px;
+    min-height:700px;
+}
+
+.result-placeholder{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    color:#7b8195;
+    text-align:center;
+}
+
+.result-placeholder .icon{
+    font-size:64px;
+    margin-bottom:24px;
+}
+
+.prediction{
+    margin-top:35px;
+}
+
+.prediction h2{
+    font-size:42px;
+    margin-bottom:12px;
+}
+
+.confidence{
+    color:#8f96ab;
+    margin-bottom:24px;
+}
+
+.bar{
+    width:100%;
+    height:16px;
+    background:#151b29;
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:30px;
+}
+
+.fill{
+    width:0%;
+    height:100%;
+    background:linear-gradient(90deg,#ff4b6e,#ff7b95);
+    transition:1s;
+}
+
+.class-list{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.class-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#111624;
+    border-radius:14px;
+    padding:16px 18px;
+}
+
+.class-name{
+    color:#cfd5e6;
+}
+
+.class-score{
+    color:#ff6b8d;
+    font-weight:700;
+}
+
+@media(max-width:1100px){
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
     }
 
-    .card {
-      background: #111827;
-      padding: 30px;
-      border-radius: 20px;
-      width: 400px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    .samples{
+        grid-template-columns:repeat(2,1fr);
     }
 
-    h2 {
-      margin-bottom: 20px;
+    .bottom{
+        grid-template-columns:1fr;
     }
+}
 
-    input {
-      margin: 15px 0;
-    }
-
-    button {
-      background: #e94560;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 10px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #c53050;
-      transform: translateY(-2px);
-    }
-
-    #preview {
-      margin-top: 15px;
-      width: 100%;
-      border-radius: 12px;
-      display: none;
-    }
-
-    .result {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .bar {
-      margin-top: 10px;
-      height: 10px;
-      background: #374151;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    .fill {
-      height: 100%;
-      background: #e94560;
-      width: 0%;
-      transition: width 0.6s ease;
-    }
-  </style>
+</style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>🧠 LightCNN Classifier</h2>
+<div class="container">
 
-  <input type="file" id="fileInput"><br>
-  <img id="preview">
+    <div class="topbar">
 
-  <br>
-  <button onclick="predict()">Predict</button>
+        <div class="brand">
+            <div class="logo">∿</div>
 
-  <div class="result" id="result">Result: -</div>
+            <div>
+                <h1>LightCNN Classifier</h1>
+                <p>Residual Attention · STL-10 · offline engine</p>
+            </div>
+        </div>
 
-  <div class="bar">
-    <div class="fill" id="confidenceBar"></div>
-  </div>
+        <div class="param-chip">336,272 params</div>
+
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="stats">
+
+        <div class="card">
+            <div class="label">VAL ACC</div>
+            <div class="big">66.9%</div>
+            <div class="sub">epoch 20 / 20</div>
+        </div>
+
+        <div class="card">
+            <div class="label">PARAMS</div>
+            <div class="big">336K</div>
+            <div class="sub">14× lighter</div>
+        </div>
+
+        <div class="card">
+            <div class="label">CLASSES</div>
+            <div class="big">10</div>
+            <div class="sub">STL-10</div>
+        </div>
+
+        <div class="card">
+            <div class="label">INPUT</div>
+            <div class="big">96px</div>
+            <div class="sub">RGB · 3ch</div>
+        </div>
+
+    </div>
+
+    <div class="card arch">
+
+        <div class="block red">Stem<br>3→32</div>
+        <div class="arrow">→</div>
+
+        <div class="block">Res1<br>32→32</div>
+        <div class="arrow">→</div>
+
+        <div class="block green">ChAttn<br>SpAttn</div>
+        <div class="arrow">→</div>
+
+        <div class="block">Res2<br>32→64</div>
+        <div class="arrow">→</div>
+
+        <div class="block green">Attn</div>
+        <div class="arrow">→</div>
+
+        <div class="block">Res3<br>64→128</div>
+        <div class="arrow">→</div>
+
+        <div class="block green">Attn</div>
+        <div class="arrow">→</div>
+
+        <div class="block gray">AvgPool<br>128</div>
+        <div class="arrow">→</div>
+
+        <div class="block red">FC<br>→10</div>
+
+    </div>
+
+    <div class="section-title">
+        QUICK SAMPLES — CLICK TO CLASSIFY
+    </div>
+
+    <div class="samples">
+
+        <div class="sample"><div class="emoji">✈️</div><div class="txt">airplane</div></div>
+        <div class="sample"><div class="emoji">🐦</div><div class="txt">bird</div></div>
+        <div class="sample"><div class="emoji">🚗</div><div class="txt">car</div></div>
+        <div class="sample"><div class="emoji">🐱</div><div class="txt">cat</div></div>
+        <div class="sample"><div class="emoji">🦌</div><div class="txt">deer</div></div>
+
+        <div class="sample"><div class="emoji">🐕</div><div class="txt">dog</div></div>
+        <div class="sample"><div class="emoji">🐎</div><div class="txt">horse</div></div>
+        <div class="sample"><div class="emoji">🐒</div><div class="txt">monkey</div></div>
+        <div class="sample"><div class="emoji">🚢</div><div class="txt">ship</div></div>
+        <div class="sample"><div class="emoji">🚚</div><div class="txt">truck</div></div>
+
+    </div>
+
+    <div class="bottom">
+
+        <div>
+
+            <label class="upload-box">
+
+                <div class="upload-icon">📂</div>
+                <div class="upload-title">Drop image here</div>
+                <div class="upload-sub">PNG · JPG · WEBP · any size</div>
+
+                <input type="file" id="fileInput" hidden>
+
+            </label>
+
+            <div class="preview-card">
+                <img id="preview">
+            </div>
+
+            <button class="predict-btn" onclick="predict()">
+                classify image
+            </button>
+
+        </div>
+
+        <div class="result-panel">
+
+            <div class="label">
+                CLASSIFICATION RESULT
+            </div>
+
+            <div class="result-placeholder" id="resultPlaceholder">
+
+                <div class="icon">🔍</div>
+
+                <div style="font-size:34px; margin-bottom:14px;">
+                    Upload an image
+                </div>
+
+                <div style="color:#7a8094;">
+                    Run inference with LightCNN
+                </div>
+
+            </div>
+
+            <div class="prediction" id="predictionBox" style="display:none;">
+
+                <h2 id="predictedClass">cat</h2>
+
+                <div class="confidence" id="confidenceText">
+                    confidence 94.2%
+                </div>
+
+                <div class="bar">
+                    <div class="fill" id="confidenceFill"></div>
+                </div>
+
+                <div class="class-list" id="classList"></div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 <script>
-const CLASSES = ['airplane','bird','car','cat','deer','dog','horse','monkey','ship','truck'];
+
+const CLASSES = [
+'airplane','bird','car','cat','deer',
+'dog','horse','monkey','ship','truck'
+];
 
 let session;
 
-// LOAD MODEL
 async function loadModel(){
-  console.log("Loading model...");
-  session = await ort.InferenceSession.create("lightcnn.onnx");
-  console.log("Model loaded!");
+
+    session = await ort.InferenceSession.create("lightcnn.onnx");
+
+    console.log("Model loaded");
 }
 
 loadModel();
 
-// PREPROCESS
 function preprocess(img){
-  const canvas = document.createElement('canvas');
-  canvas.width = 96;
-  canvas.height = 96;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, 96, 96);
 
-  const data = ctx.getImageData(0,0,96,96).data;
-  const input = new Float32Array(3*96*96);
+    const canvas = document.createElement('canvas');
 
-  for(let i=0;i<96*96;i++){
-    const r = data[i*4]/255;
-    const g = data[i*4+1]/255;
-    const b = data[i*4+2]/255;
+    canvas.width = 96;
+    canvas.height = 96;
 
-    input[i] = (r - 0.4467) / 0.2603;
-    input[i + 96*96] = (g - 0.4398) / 0.2566;
-    input[i + 2*96*96] = (b - 0.4066) / 0.2713;
-  }
+    const ctx = canvas.getContext('2d');
 
-  return input;
+    ctx.drawImage(img,0,0,96,96);
+
+    const data = ctx.getImageData(0,0,96,96).data;
+
+    const input = new Float32Array(3*96*96);
+
+    for(let i=0;i<96*96;i++){
+
+        const r = data[i*4]/255;
+        const g = data[i*4+1]/255;
+        const b = data[i*4+2]/255;
+
+        input[i] = (r - 0.4467) / 0.2603;
+        input[i + 96*96] = (g - 0.4398) / 0.2566;
+        input[i + 2*96*96] = (b - 0.4066) / 0.2713;
+    }
+
+    return input;
 }
 
-// SOFTMAX
 function softmax(arr){
-  const max = Math.max(...arr);
-  const exps = arr.map(x => Math.exp(x - max));
-  const sum = exps.reduce((a,b)=>a+b,0);
-  return exps.map(x => x/sum);
+
+    const max = Math.max(...arr);
+
+    const exps = arr.map(x=>Math.exp(x-max));
+
+    const sum = exps.reduce((a,b)=>a+b,0);
+
+    return exps.map(x=>x/sum);
 }
 
-// IMAGE LOAD
 const input = document.getElementById("fileInput");
 const preview = document.getElementById("preview");
 
-input.onchange = () => {
-  preview.src = URL.createObjectURL(input.files[0]);
-  preview.style.display = "block";
-}
+input.onchange = ()=>{
 
-// PREDICT
+    preview.src = URL.createObjectURL(input.files[0]);
+
+    preview.style.display = "block";
+};
+
 async function predict(){
-  if(!session){
-    alert("Model still loading...");
-    return;
-  }
 
-  const tensorData = preprocess(preview);
-  const tensor = new ort.Tensor("float32", tensorData, [1,3,96,96]);
+    if(!session){
 
-  const output = await session.run({input: tensor});
-  const probs = softmax(Array.from(output.output.data));
+        alert("Model still loading");
+        return;
+    }
 
-  let maxIdx = probs.indexOf(Math.max(...probs));
-  let confidence = probs[maxIdx] * 100;
+    if(!preview.src){
 
-  document.getElementById("result").innerText =
-    CLASSES[maxIdx] + " (" + confidence.toFixed(1) + "%)";
+        alert("Upload image first");
+        return;
+    }
 
-  document.getElementById("confidenceBar").style.width = confidence + "%";
+    const tensorData = preprocess(preview);
+
+    const tensor = new ort.Tensor(
+        "float32",
+        tensorData,
+        [1,3,96,96]
+    );
+
+    const output = await session.run({input:tensor});
+
+    const probs = softmax(
+        Array.from(output.output.data)
+    );
+
+    const sorted = probs
+    .map((p,i)=>({
+        name:CLASSES[i],
+        prob:p
+    }))
+    .sort((a,b)=>b.prob-a.prob);
+
+    const top = sorted[0];
+
+    document.getElementById("resultPlaceholder").style.display="none";
+    document.getElementById("predictionBox").style.display="block";
+
+    document.getElementById("predictedClass").innerText =
+    top.name;
+
+    document.getElementById("confidenceText").innerText =
+    "confidence " + (top.prob*100).toFixed(1) + "%";
+
+    document.getElementById("confidenceFill").style.width =
+    (top.prob*100)+"%";
+
+    const classList = document.getElementById("classList");
+
+    classList.innerHTML = "";
+
+    sorted.slice(0,5).forEach(item=>{
+
+        classList.innerHTML += `
+        <div class="class-row">
+            <div class="class-name">${item.name}</div>
+            <div class="class-score">
+                ${(item.prob*100).toFixed(1)}%
+            </div>
+        </div>
+        `;
+    });
 }
+
 </script>
 
 </body>
